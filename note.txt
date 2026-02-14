@@ -1,0 +1,49 @@
+Here's your project. The structure and what each piece does:
+
+  distributed-cache/
+  ├── main.go                      # CLI entry point — start nodes, join cluster
+  ├── cache/
+  │   ├── cache.go                 # In-memory store with TTL & eviction
+  │   └── cache_test.go            # Tests for the cache layer
+  ├── consistent/
+  │   ├── hashring.go              # Consistent hashing ring for key→node routing
+  │   └── hashring_test.go         # Tests for distribution & consistency
+  ├── discovery/
+  │   └── discovery.go             # Node registry & heartbeat-based health checks
+  ├── protocol/
+  │   └── protocol.go              # Wire protocol — serialize requests/responses
+  ├── server/
+  │   └── server.go                # TCP server — routing, local handling, proxying
+  └── client/
+      └── client.go                # Client SDK to talk to the cluster
+
+  Recommended implementation order:
+
+  ┌──────┬─────────────┬───────────────────────────────────────────────────────────────────┐
+  │ Step │   Package   │                     Key Concepts You'll Learn                     │
+  ├──────┼─────────────┼───────────────────────────────────────────────────────────────────┤
+  │ 1    │ cache/      │ sync.RWMutex, goroutines (background eviction), time.Ticker       │
+  ├──────┼─────────────┼───────────────────────────────────────────────────────────────────┤
+  │ 2    │ consistent/ │ Hashing (crc32/fnv), sort.Search (binary search), virtual nodes   │
+  ├──────┼─────────────┼───────────────────────────────────────────────────────────────────┤
+  │ 3    │ protocol/   │ Serialization (encoding/gob or custom binary), byte manipulation  │
+  ├──────┼─────────────┼───────────────────────────────────────────────────────────────────┤
+  │ 4    │ server/     │ net.Listen, TCP accept loop, connection handling, request routing │
+  ├──────┼─────────────┼───────────────────────────────────────────────────────────────────┤
+  │ 5    │ client/     │ net.Dial, TCP request/response cycle                              │
+  ├──────┼─────────────┼───────────────────────────────────────────────────────────────────┤
+  │ 6    │ discovery/  │ Heartbeats, failure detection, background health checks           │
+  ├──────┼─────────────┼───────────────────────────────────────────────────────────────────┤
+  │ 7    │ main.go     │ flag, os/signal, graceful shutdown                                │
+  └──────┴─────────────┴───────────────────────────────────────────────────────────────────┘
+
+  Every file has // YOUR CODE HERE markers with detailed hints on what to implement. Run tests as you go with:
+  - go test ./cache/ -race -v
+  - go test ./consistent/ -v
+
+  Once everything works, you can spin up a 3-node cluster:
+  go run main.go -addr :7000
+  go run main.go -addr :7001 -join :7000
+  go run main.go -addr :7002 -join :7000
+
+  Good luck — start with cache/cache.go, it's the most self-contained piece!
