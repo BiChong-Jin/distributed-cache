@@ -29,13 +29,18 @@ const (
 // Request is the message a client sends to a cache node.
 // TODO: Include the command type, key, value (for Set), and TTL.
 type Request struct {
-	// YOUR CODE HERE
+  commandType CommandType
+  key int
+  value string
+  ttl time.Duration
 }
 
 // Response is the message a cache node sends back to a client.
 // TODO: Include the status code, value (for Get), and an error message if any.
 type Response struct {
-	// YOUR CODE HERE
+  statusCode StatusCode
+  value string
+  errorMessage string
 }
 
 // -------- Serialization --------
