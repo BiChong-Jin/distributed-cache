@@ -1,6 +1,10 @@
 package protocol
 
-import "time"
+import (
+	"bytes"
+	"encoding/gob"
+	"time"
+)
 
 // -------- Wire Protocol --------
 // Defines how nodes talk to each other over TCP.
@@ -29,18 +33,18 @@ const (
 // Request is the message a client sends to a cache node.
 // TODO: Include the command type, key, value (for Set), and TTL.
 type Request struct {
-  commandType CommandType
-  key int
-  value string
-  ttl time.Duration
+  CommandType CommandType
+  Key string
+  Value []byte
+  TTL time.Duration
 }
 
 // Response is the message a cache node sends back to a client.
 // TODO: Include the status code, value (for Get), and an error message if any.
 type Response struct {
-  statusCode StatusCode
-  value string
-  errorMessage string
+  StatusCode StatusCode
+  Value []byte
+  ErrorMessage string
 }
 
 // -------- Serialization --------
@@ -53,26 +57,49 @@ type Response struct {
 // Encode serializes a Request into bytes for sending over the network.
 // TODO: Use your chosen encoding strategy.
 func (r *Request) Encode() ([]byte, error) {
-	// YOUR CODE HERE
-	return nil, nil
+	var buf bytes.Buffer
+  err := gob.NewEncoder(&buf).Encode(r)
+
+  if err != nil {
+    return nil, err
+  }
+  return buf.Bytes(), nil
 }
 
 // DecodeRequest deserializes bytes back into a Request.
 func DecodeRequest(data []byte) (*Request, error) {
-	// YOUR CODE HERE
-	return nil, nil
+	var req Request
+  err := gob.NewDecoder(bytes.NewReader(data)).Decode(&req)
+
+  if err != nil {
+    return nil, err
+  }
+
+  return &req, nil
 }
 
 // Encode serializes a Response into bytes.
 func (r *Response) Encode() ([]byte, error) {
-	// YOUR CODE HERE
-	return nil, nil
+  var buf bytes.Buffer
+  err := gob.NewEncoder(&buf).Encode(r)
+
+  if err != nil {
+    return nil, err
+  }
+
+	return buf.Bytes(), nil
 }
 
 // DecodeResponse deserializes bytes back into a Response.
 func DecodeResponse(data []byte) (*Response, error) {
-	// YOUR CODE HERE
-	return nil, nil
+  var res Response
+  err := gob.NewDecoder(bytes.NewReader(data)).Decode(&res)
+
+  if err != nil {
+    return nil, err
+  }
+
+	return &res, nil
 }
 
 // Ensure the compiler knows we use time.Duration (suppress unused import).
