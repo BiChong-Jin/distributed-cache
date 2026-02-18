@@ -1,6 +1,7 @@
 package server
 
 import (
+	"encoding/json"
 	"net"
 	"time"
 
@@ -120,8 +121,37 @@ func (s *Server) handleConnection(conn net.Conn) {
 
 // handleLocally processes a request against this node's local cache.
 // TODO: Switch on CommandType → call cache.Get / cache.Set / cache.Delete.
-func (s *Server) handleLocally( /* *protocol.Request */ ) /* *protocol.Response */ {
-	// YOUR CODE HERE
+func (s *Server) handleLocally(req *protocol.Request) *protocol.Response{
+  switch req.CommandType {
+    case protocol.CmdGet:
+      val, ok := s.cache.Get(req.Key)
+      if !ok {
+        return &protocol.Response{StatusCode: protocol.StatusNotFound}
+      }
+      return &protocol.Response{StatusCode: protocol.StatusOK, Value: val}
+    
+    case protocol.CmdSet:
+      s.cache.Set(req.Key, req.Value, req.TTL)
+      return &protocol.Response{StatusCode: protocol.StatusOK}
+
+    case protocol.CmdDelete:
+      s.cache.Delete(req.Key)
+      return &protocol.Response{StatusCode: protocol.StatusOK}
+
+    case protocol.CmdPing:
+      return &protocol.Response{StatusCode: protocol.StatusOK}
+
+    case protocol.CmdKeys:
+      keys := s.cache.Keys()
+      data, err := json.Marshal(keys)
+      if err != nil {
+        return &protocol.Response{StatusCode: protocol.StatusError, ErrorMessage: "Failed to get keys."} 
+      }
+      return &protocol.Response{StatusCode: protocol.StatusOK, Value: data}
+
+    default:
+      return  &protocol.Response{StatusCode: protocol.StatusError, ErrorMessage: "Unknown CommandType."}
+  }
 }
 
 // forwardToNode sends a request to another node and returns its response.
