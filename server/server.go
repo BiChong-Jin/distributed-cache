@@ -1,9 +1,13 @@
 package server
 
 import (
-	"github.com/jin/distributed-cache/cache"
-	"github.com/jin/distributed-cache/consistent"
-	"github.com/jin/distributed-cache/discovery"
+	"net"
+	"time"
+
+	"github.com/BiChong-Jin/distributed-cache/cache"
+	"github.com/BiChong-Jin/distributed-cache/consistent"
+	"github.com/BiChong-Jin/distributed-cache/discovery"
+	"github.com/BiChong-Jin/distributed-cache/protocol"
 )
 
 // -------- Cache Server (one per node) --------
@@ -21,14 +25,18 @@ type Server struct {
 	cache    *cache.Cache
 	ring     *consistent.HashRing
 	registry *discovery.Registry
-	// YOUR CODE HERE (net.Listener, shutdown channel, etc.)
+  listener net.Listener
 }
 
 // NewServer creates a Server but does not start listening yet.
 // TODO: Initialize the cache, hash ring, and registry.
 func NewServer(addr string) *Server {
-	// YOUR CODE HERE
-	return nil
+  return &Server{
+    Addr: addr,
+    cache: cache.NewCache(5 * time.Second),
+    ring: consistent.NewHashRing(150),
+    registry: discovery.NewRegistry(10 * time.Second),
+  }
 }
 
 // Start begins listening on TCP and accepting connections.
@@ -39,6 +47,25 @@ func NewServer(addr string) *Server {
 //   4. In a loop, accept connections and handle each in a goroutine
 func (s *Server) Start() error {
 	// YOUR CODE HERE
+  addr := s.Addr
+  hr := s.ring
+  listener, err := net.Listen("tcp", addr)
+  if err != nil {
+    return err
+  }
+  
+  s.listener = listener
+  s.registry.Register(addr)
+  hr.AddNode(addr) 
+
+  for {
+    conn, err := listener.Accept()
+    if err != nil {
+      return err
+    }
+
+    go s.handleConnection(conn)
+  }
 	return nil
 }
 
@@ -58,8 +85,37 @@ func (s *Server) Stop() error {
 //   3. Encode the Response and write it back
 //
 // This is the core routing logic of the distributed cache!
-func (s *Server) handleConnection( /* net.Conn */ ) {
-	// YOUR CODE HERE
+func (s *Server) handleConnection(conn net.Conn) {
+  defer conn.Close()
+
+  buf := make([]byte, 4096)
+  n, err := conn.Read(buf)
+  if err != nil {
+    return 
+  }
+  
+  data := buf[:n]
+  req, err := protocol.DecodeRequest(data)
+  if err != nil {
+    return
+  }
+
+  k := req.Key
+  no := s.ring.GetNode(k)
+  var res *protocol.Response
+
+  if s.Addr == no {
+    res = s.handleLocally(req)
+  } else {
+    res = s.forwardToNode(no, req) 
+  }
+  
+  respBytes, err := res.Encode()
+  if err != nil {
+    return
+  }
+
+  conn.Write(respBytes)
 }
 
 // handleLocally processes a request against this node's local cache.
