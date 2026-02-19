@@ -193,5 +193,6 @@ func (s *Server) forwardToNode(addr string, req *protocol.Request) *protocol.Res
 // JoinCluster adds a known peer node to this server's ring and registry.
 // TODO: Add the peer address to the hash ring and register it in discovery.
 func (s *Server) JoinCluster(peerAddr string) {
-	// YOUR CODE HERE
+  s.ring.AddNode(peerAddr)
+  s.registry.Register(peerAddr)
 }
