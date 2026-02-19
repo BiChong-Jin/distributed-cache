@@ -156,8 +156,31 @@ func (s *Server) handleLocally(req *protocol.Request) *protocol.Response{
 
 // forwardToNode sends a request to another node and returns its response.
 // TODO: Dial TCP to the target node, send the encoded request, read the response.
-func (s *Server) forwardToNode( /* addr string, *protocol.Request */ ) /* *protocol.Response */ {
-	// YOUR CODE HERE
+func (s *Server) forwardToNode(addr string, req *protocol.Request) *protocol.Response {
+  conn, err := net.Dial("tcp", addr)
+  if err != nil {
+    return &protocol.Response{StatusCode: protocol.StatusError, ErrorMessage: err.Error()}
+  }
+  defer conn.Close()
+
+  reqBytes, err := req.Encode()
+  if err != nil {
+    return &protocol.Response{StatusCode: protocol.StatusError, ErrorMessage: err.Error()}
+  }
+  conn.Write(reqBytes)
+  
+  buf := make([]byte, 4096)
+  n, err := conn.Read(buf)
+  if err != nil {
+    return &protocol.Response{StatusCode: protocol.StatusError, ErrorMessage: err.Error()}
+  }
+  
+  res, err := protocol.DecodeResponse(buf[:n])
+  if err != nil {
+    return &protocol.Response{StatusCode: protocol.StatusError, ErrorMessage: err.Error()}
+  }
+
+  return res
 }
 
 // JoinCluster adds a known peer node to this server's ring and registry.
