@@ -36,7 +36,6 @@ type Registry struct {
 }
 
 // NewRegistry creates a Registry that marks nodes dead after the given timeout.
-// TODO: Start a background goroutine that periodically checks heartbeat timestamps.
 func NewRegistry(healthTimeout time.Duration) *Registry {
   r := &Registry{
     AddrNode: make(map[string]Node),
@@ -74,7 +73,6 @@ func (r *Registry) Register(addr string) {
 }
 
 // Heartbeat updates the last-seen time for a node.
-// TODO: If the node was StatusSuspect, move it back to StatusAlive.
 func (r *Registry) Heartbeat(addr string) {
   r.mu.Lock()
   defer r.mu.Unlock()
@@ -94,20 +92,42 @@ func (r *Registry) Heartbeat(addr string) {
 
 // Unregister removes a node from the cluster.
 func (r *Registry) Unregister(addr string) {
-	// YOUR CODE HERE
+  r.mu.Lock()
+  defer r.mu.Unlock()
+
+  delete(r.AddrNode, addr)
 }
 
 // AliveNodes returns the addresses of all nodes currently StatusAlive.
 func (r *Registry) AliveNodes() []string {
-	// YOUR CODE HERE
-	return nil
+  r.mu.Lock()
+  defer r.mu.Unlock()
+
+  addr := []string{}
+  for add, node := range r.AddrNode {
+    if node.CurrStatus == StatusAlive {
+      addr = append(addr, add)
+    }
+  }
+  return addr
 }
 
 // checkHealth iterates over all nodes and marks those with stale heartbeats
 // as StatusSuspect or StatusDead.
-// TODO: If last heartbeat > timeout, mark StatusSuspect.
 //
 //	If last heartbeat > 2*timeout, mark StatusDead and remove.
 func (r *Registry) checkHealth() {
-	// YOUR CODE HERE
+  r.mu.Lock()
+  defer r.mu.Unlock()
+
+  for add, node := range r.AddrNode {
+    if time.Since(node.LastHB) > r.timeOut {
+      node.CurrStatus = StatusSuspect
+      r.AddrNode[add] = node
+    } 
+    if time.Since(node.LastHB) > 2*r.timeOut {
+      node.CurrStatus = StatusDead
+      delete(r.AddrNode, add)
+    }
+  }
 }
