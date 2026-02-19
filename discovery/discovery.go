@@ -16,14 +16,16 @@ const (
 
 // Node holds metadata about a single cache node in the cluster.
 // TODO: Store the node's address, its current status, and the last time
-//       we received a heartbeat from it.
+//
+//	we received a heartbeat from it.
 type Node struct {
 	// YOUR CODE HERE
 }
 
 // Registry keeps track of all known nodes and their health.
 // TODO: Store a map of address→Node, protect with mutex, and configure
-//       a timeout after which a node is considered dead.
+//
+//	a timeout after which a node is considered dead.
 type Registry struct {
 	// YOUR CODE HERE
 }
@@ -60,7 +62,8 @@ func (r *Registry) AliveNodes() []string {
 // checkHealth iterates over all nodes and marks those with stale heartbeats
 // as StatusSuspect or StatusDead.
 // TODO: If last heartbeat > timeout, mark StatusSuspect.
-//       If last heartbeat > 2*timeout, mark StatusDead and remove.
+//
+//	If last heartbeat > 2*timeout, mark StatusDead and remove.
 func (r *Registry) checkHealth() {
 	// YOUR CODE HERE
 }

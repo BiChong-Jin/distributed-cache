@@ -59,31 +59,31 @@ func TestDelete(t *testing.T) {
 func TestTTLExpiration(t *testing.T) {
 	// TODO: Set a key with a short TTL (e.g. 50ms), sleep past the TTL,
 	// verify Get returns false.
-  c := NewCache(5 * time.Second)
-  c.Set("name", []byte("jin"), 5 * time.Millisecond)
+	c := NewCache(5 * time.Second)
+	c.Set("name", []byte("jin"), 5*time.Millisecond)
 
-  time.Sleep(1 * time.Second)
+	time.Sleep(1 * time.Second)
 
-  _, ok := c.Get("name")
+	_, ok := c.Get("name")
 
-  if ok {
-    t.Fatal("expected ok=false for passing ttl, got ture")
-  }
+	if ok {
+		t.Fatal("expected ok=false for passing ttl, got ture")
+	}
 }
 
 func TestEviction(t *testing.T) {
 	// TODO: Create a cache with a short cleanup interval,
 	// set items with short TTL, wait for eviction, verify Count() drops.
-  c := NewCache(5 * time.Millisecond)
-  c.Set("name", []byte("jin"), 1 * time.Millisecond)
-  old_cnt := c.Count()
+	c := NewCache(5 * time.Millisecond)
+	c.Set("name", []byte("jin"), 1*time.Millisecond)
+	old_cnt := c.Count()
 
-  time.Sleep(1 * time.Second)
-  new_cnt := c.Count()
+	time.Sleep(1 * time.Second)
+	new_cnt := c.Count()
 
-  if new_cnt >= old_cnt {
-    t.Fatal("expected the count to fall down, but it goes up")
-  }
+	if new_cnt >= old_cnt {
+		t.Fatal("expected the count to fall down, but it goes up")
+	}
 
 }
 

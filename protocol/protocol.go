@@ -25,7 +25,7 @@ const (
 type StatusCode byte
 
 const (
-	StatusOK       StatusCode = iota + 1
+	StatusOK StatusCode = iota + 1
 	StatusNotFound
 	StatusError
 )
@@ -33,18 +33,18 @@ const (
 // Request is the message a client sends to a cache node.
 // TODO: Include the command type, key, value (for Set), and TTL.
 type Request struct {
-  CommandType CommandType
-  Key string
-  Value []byte
-  TTL time.Duration
+	CommandType CommandType
+	Key         string
+	Value       []byte
+	TTL         time.Duration
 }
 
 // Response is the message a cache node sends back to a client.
 // TODO: Include the status code, value (for Get), and an error message if any.
 type Response struct {
-  StatusCode StatusCode
-  Value []byte
-  ErrorMessage string
+	StatusCode   StatusCode
+	Value        []byte
+	ErrorMessage string
 }
 
 // -------- Serialization --------
@@ -58,46 +58,46 @@ type Response struct {
 // TODO: Use your chosen encoding strategy.
 func (r *Request) Encode() ([]byte, error) {
 	var buf bytes.Buffer
-  err := gob.NewEncoder(&buf).Encode(r)
+	err := gob.NewEncoder(&buf).Encode(r)
 
-  if err != nil {
-    return nil, err
-  }
-  return buf.Bytes(), nil
+	if err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
 }
 
 // DecodeRequest deserializes bytes back into a Request.
 func DecodeRequest(data []byte) (*Request, error) {
 	var req Request
-  err := gob.NewDecoder(bytes.NewReader(data)).Decode(&req)
+	err := gob.NewDecoder(bytes.NewReader(data)).Decode(&req)
 
-  if err != nil {
-    return nil, err
-  }
+	if err != nil {
+		return nil, err
+	}
 
-  return &req, nil
+	return &req, nil
 }
 
 // Encode serializes a Response into bytes.
 func (r *Response) Encode() ([]byte, error) {
-  var buf bytes.Buffer
-  err := gob.NewEncoder(&buf).Encode(r)
+	var buf bytes.Buffer
+	err := gob.NewEncoder(&buf).Encode(r)
 
-  if err != nil {
-    return nil, err
-  }
+	if err != nil {
+		return nil, err
+	}
 
 	return buf.Bytes(), nil
 }
 
 // DecodeResponse deserializes bytes back into a Response.
 func DecodeResponse(data []byte) (*Response, error) {
-  var res Response
-  err := gob.NewDecoder(bytes.NewReader(data)).Decode(&res)
+	var res Response
+	err := gob.NewDecoder(bytes.NewReader(data)).Decode(&res)
 
-  if err != nil {
-    return nil, err
-  }
+	if err != nil {
+		return nil, err
+	}
 
 	return &res, nil
 }
