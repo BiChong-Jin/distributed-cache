@@ -3,8 +3,6 @@ package discovery
 import (
 	"sync"
 	"time"
-
-	"github.com/BiChong-Jin/distributed-cache/discovery"
 )
 
 // -------- Node Discovery & Health --------
@@ -59,7 +57,10 @@ func NewRegistry(healthTimeout time.Duration) *Registry {
 
 // Register adds a new node to the cluster or updates an existing one's heartbeat.
 func (r *Registry) Register(addr string) {
-  _, ok := r.AddrNode[addr]
+  r.mu.Lock()
+  defer r.mu.Unlock()
+
+  node, ok := r.AddrNode[addr]
   if !ok {
     r.AddrNode[addr] = Node{
       Addr: addr,
@@ -67,17 +68,28 @@ func (r *Registry) Register(addr string) {
       LastHB: time.Now(),
     }
   } else {
-    r.Heartbeat(addr)
+    node.LastHB = time.Now()
+    r.AddrNode[addr] = node
   }
 }
 
 // Heartbeat updates the last-seen time for a node.
 // TODO: If the node was StatusSuspect, move it back to StatusAlive.
 func (r *Registry) Heartbeat(addr string) {
-  switch NodeStatus {
-    case discovery.StatusSuspect:
-      
+  r.mu.Lock()
+  defer r.mu.Unlock()
+
+  node, ok := r.AddrNode[addr]
+  if !ok {
+    return
   }
+  
+  node.LastHB = time.Now()
+  if node.CurrStatus == StatusSuspect {
+    node.CurrStatus = StatusAlive
+  }
+
+  r.AddrNode[addr] = node
 }
 
 // Unregister removes a node from the cluster.
