@@ -1,6 +1,11 @@
 package discovery
 
-import "time"
+import (
+	"sync"
+	"time"
+
+	"github.com/BiChong-Jin/distributed-cache/discovery"
+)
 
 // -------- Node Discovery & Health --------
 // In a distributed system, nodes need to find each other and detect failures.
@@ -15,37 +20,64 @@ const (
 )
 
 // Node holds metadata about a single cache node in the cluster.
-// TODO: Store the node's address, its current status, and the last time
 //
 //	we received a heartbeat from it.
 type Node struct {
-	// YOUR CODE HERE
+  Addr string
+  CurrStatus NodeStatus
+  LastHB time.Time
 }
 
 // Registry keeps track of all known nodes and their health.
-// TODO: Store a map of address→Node, protect with mutex, and configure
 //
 //	a timeout after which a node is considered dead.
 type Registry struct {
-	// YOUR CODE HERE
+  AddrNode map[string]Node
+  mu sync.Mutex
+  timeOut time.Duration
 }
 
 // NewRegistry creates a Registry that marks nodes dead after the given timeout.
 // TODO: Start a background goroutine that periodically checks heartbeat timestamps.
 func NewRegistry(healthTimeout time.Duration) *Registry {
-	// YOUR CODE HERE
-	return nil
+  r := &Registry{
+    AddrNode: make(map[string]Node),
+    timeOut: healthTimeout,
+  }
+
+  ticker := time.NewTicker(healthTimeout)
+  go func() {
+    for {
+      select {
+        case <- ticker.C:
+          r.checkHealth()
+      }
+    }
+  }()
+  return r
 }
 
 // Register adds a new node to the cluster or updates an existing one's heartbeat.
 func (r *Registry) Register(addr string) {
-	// YOUR CODE HERE
+  _, ok := r.AddrNode[addr]
+  if !ok {
+    r.AddrNode[addr] = Node{
+      Addr: addr,
+      CurrStatus: StatusAlive,
+      LastHB: time.Now(),
+    }
+  } else {
+    r.Heartbeat(addr)
+  }
 }
 
 // Heartbeat updates the last-seen time for a node.
 // TODO: If the node was StatusSuspect, move it back to StatusAlive.
 func (r *Registry) Heartbeat(addr string) {
-	// YOUR CODE HERE
+  switch NodeStatus {
+    case discovery.StatusSuspect:
+      
+  }
 }
 
 // Unregister removes a node from the cluster.
