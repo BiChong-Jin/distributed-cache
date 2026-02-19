@@ -73,8 +73,15 @@ func (s *Server) Start() error {
 // Stop gracefully shuts down the server.
 // TODO: Close the listener, unregister from discovery, remove from ring.
 func (s *Server) Stop() error {
-	// YOUR CODE HERE
-	return nil
+  err := s.listener.Close()
+  if err != nil {
+    return err
+  }
+
+  s.registry.Unregister(s.Addr)
+  s.ring.RemoveNode(s.Addr)
+  
+  return nil
 }
 
 // handleConnection reads requests from a TCP connection and sends responses.
