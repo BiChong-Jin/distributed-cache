@@ -3,7 +3,11 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
+	"os"
+	"os/signal"
+	"syscall"
+
+	"github.com/BiChong-Jin/distributed-cache/server"
 )
 
 // -------- Entry Point --------
@@ -22,13 +26,15 @@ func main() {
 		fmt.Printf("Joining cluster via %s\n", *join)
 	}
 
-	// TODO:
-	// 1. Create a new Server with the given addr
-	// 2. If -join is provided, call server.JoinCluster(joinAddr)
-	// 3. Call server.Start() (this blocks)
-	// 4. Handle OS signals (SIGINT, SIGTERM) for graceful shutdown → server.Stop()
+	s := server.NewServer(*addr)
+	if *join != "" {
+		s.JoinCluster(*join)
+	}
+	go s.Start()
 
-	_ = addr
-	_ = join
-	log.Fatal("Not implemented yet — start coding!")
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
+
+	<-sigCh
+	s.Stop()
 }
